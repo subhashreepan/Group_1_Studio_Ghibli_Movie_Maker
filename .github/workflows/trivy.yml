@@ -46,11 +46,19 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
         with:
-          image-ref: 'group_1_studio_ghibli_movie_maker-app ${{ secrets.DOCKER_USERNAME }}/app:$VERSION'
-          format: 'template'
-          template: '@/contrib/sarif.tpl'
-          output: 'trivy-results.sarif'
-          severity: 'CRITICAL,HIGH'
+         image-ref:  ${{ secrets.DOCKER_USERNAME }}/app:$VERSION
+         format: template
+         template: "@/contrib/sarif.tpl"
+         output: trivy-results.sarif
+         severity: CRITICAL,HIGH
+         scan-type: image
+         scan-ref: .
+         ignore-unfixed: false
+         vuln-type: os,library
+         list-all-pkgs: false
+        env:
+         VERSION: 20250319103247
+
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
