@@ -13,53 +13,50 @@ on:
 
 permissions:
   contents: read
+  security-events: write
+  actions: read
 
 jobs:
   build:
-    permissions:
-      contents: read
-      security-events: write
-      actions: read
-    name: Build
+    name: Build and Scan with Trivy
     runs-on: ubuntu-latest
     steps:
+      # Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Set the version based on timestamp
       - name: Set Version
         id: set_version
         run: |
-          echo "VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
-          echo "VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+          VERSION=$(date +%Y%m%d%H%M%S)
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
 
-      - name: Set up Docker Buildx 
+      # Set up Docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2 
 
+      # Build the Docker image
       - name: Build Docker image
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/app:${{ env.VERSION }} .
 
-      - name: Push Docker image to registry
+      # Log in to Docker Hub
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Push the Docker image to Docker Hub
+      - name: Push Docker image
         run: |
+          docker tag ${{ secrets.DOCKER_USERNAME }}/app:${{ env.VERSION }} ${{ secrets.DOCKER_USERNAME }}/app:${{ env.VERSION }}
           docker push ${{ secrets.DOCKER_USERNAME }}/app:${{ env.VERSION }}
 
+      # Run Trivy vulnerability scanner on the built Docker image
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
         with:
-          image-ref: ${{ secrets.DOCKER_USERNAME }}/app:${{ env.VERSION }}
-          format: template
-          template: "@/contrib/sarif.tpl"
-          output: trivy-results.sarif
-          severity: CRITICAL,HIGH
-          scan-type: image
-          scan-ref: .
-          ignore-unfixed: false
-          vuln-type: os,library
-          list-all-pkgs: false
-        env:
-          VERSION: 20250319103247
-
-      - name: Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: 'trivy-results.sarif'
+          image-ref: ${{ secrets.DOCKER
