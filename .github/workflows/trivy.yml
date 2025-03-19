@@ -9,10 +9,7 @@ on:
   push:
     branches: [ "dev" ]
   pull_request:
-    # The branches below must be a subset of the branches above
     branches: [ "dev" ]
- # schedule:
-  #  - cron: '27 19 * * 6'
 
 permissions:
   contents: read
@@ -20,25 +17,24 @@ permissions:
 jobs:
   build:
     permissions:
-      contents: read # for actions/checkout to fetch code
-      security-events: write # for github/codeql-action/upload-sarif to upload SARIF results
-      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+      contents: read
+      security-events: write
+      actions: read
     name: Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      #- name: Build an image from Dockerfile
-      #  run: |
       - name: Set Version
         id: set_version
         run: |
-         echo "VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
-         echo "VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+          echo "VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+          echo "VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
 
       - name: Set up Docker Buildx 
         uses: docker/setup-buildx-action@v2 
+
       - name: Start Docker Compose Services 
         run: | 
           docker compose up -d --build
@@ -46,19 +42,18 @@ jobs:
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@7b7aa264d83dc58691451798b4d117d53d21edfe
         with:
-         image-ref:  ${{ secrets.DOCKER_USERNAME }}/app:$VERSION
-         format: template
-         template: "@/contrib/sarif.tpl"
-         output: trivy-results.sarif
-         severity: CRITICAL,HIGH
-         scan-type: image
-         scan-ref: .
-         ignore-unfixed: false
-         vuln-type: os,library
-         list-all-pkgs: false
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/app:${{ env.VERSION }}
+          format: template
+          template: "@/contrib/sarif.tpl"
+          output: trivy-results.sarif
+          severity: CRITICAL,HIGH
+          scan-type: image
+          scan-ref: .
+          ignore-unfixed: false
+          vuln-type: os,library
+          list-all-pkgs: false
         env:
-         VERSION: 20250319103247
-
+          VERSION: 20250319103247
 
       - name: Upload Trivy scan results to GitHub Security tab
         uses: github/codeql-action/upload-sarif@v3
