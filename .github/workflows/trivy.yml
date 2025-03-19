@@ -31,8 +31,12 @@ jobs:
 
       #- name: Build an image from Dockerfile
       #  run: |
-      - name: Set Version id: set_version 
-        run: echo "VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV && echo "VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+      - name: Set Version
+        id: set_version
+        run: |
+         echo "VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_ENV
+         echo "VERSION=$(date +%Y%m%d%H%M%S)" >> $GITHUB_OUTPUT
+
       - name: Set up Docker Buildx 
         uses: docker/setup-buildx-action@v2 
       - name: Start Docker Compose Services 
