@@ -16,6 +16,6 @@ jobs:
         uses: zaproxy/action-baseline@v0.6.1
         with:
           docker_name: 'zaproxy/zap-stable'
-          target: 'http://9.169.24.55/'
+          target: 'http://134.33.240.44/'
           rules_file_name: '.zap/rules.tsv'
           cmd_options: '-a'
